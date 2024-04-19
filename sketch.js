@@ -16,8 +16,6 @@ function setup() {
   document.addEventListener("pointermove", updateRNBO);
   window.addEventListener("pointerdown", handlePointerDown); // Listen for pointer down event on the window
   
-  // Add touch event listeners
-  document.addEventListener("touchmove", handleTouchMove);
 }
 
 async function loadRNBO() {
@@ -67,19 +65,20 @@ function toggleAudioContext() {
   }
 }
 
-function handleTouchMove(event) {
+function handlePointerMove(event) {
   event.preventDefault();
 
-  // Update coordinates based on touch position
-  const touch = event.touches[0]; // Consider only the first touch for simplicity
-  const xValue = map(touch.clientX, 0, window.innerWidth, 0, 1);
-  const yValue = map(touch.clientY, 0, window.innerHeight, 1, 0); // Invert y-axis for pitch mapping
+  // Update coordinates based on pointer position
+  const pointer = event.pointerId === undefined ? event : event.getPointerList().getPointer(event.pointerId);
+  const xValue = map(pointer.clientX, 0, window.innerWidth, 0, 1);
+  const yValue = map(pointer.clientY, 0, window.innerHeight, 1, 0); // Invert y-axis for pitch mapping
 
   if (x && y) {
     x.normalizedValue = xValue;
     y.normalizedValue = yValue;
   }
 }
+
 
 function draw() {
   background(180, 17, 240);
@@ -91,3 +90,5 @@ function draw() {
     ellipse(touch.x, touch.y, 50, 50);
   }
 }
+
+
