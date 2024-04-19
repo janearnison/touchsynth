@@ -4,9 +4,8 @@ function setup() {
 }
 
 function draw() {
-  background(255);
 
-  fill('magenta');
+  background(255, 100, 40);
 
   // for each touch, draw an ellipse at its location with a unique color.
   for (var i = 0; i < Math.min(touches.length, 4); i++) {
