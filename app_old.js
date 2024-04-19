@@ -3,6 +3,29 @@ let device;
 let y;
 let x;
 
+function handlePointerDown(event) {
+  // Handle pointer down event here
+  // For example, you can log the event details
+  console.log("Pointer down event:", event);
+}
+
+function handlePointerMove(event) {
+  // Handle pointer move event here
+  // For example, you can update some variables based on the pointer position
+  // You can also call other functions to handle the pointer move event
+  console.log("Pointer move event:", event);
+  
+    // Update coordinates based on pointer position
+    const pointer = event.pointerId === undefined ? event : event.getPointerList().getPointer(event.pointerId);
+    const xValue = map(pointer.clientX, 0, window.innerWidth, 0, 1);
+    const yValue = map(pointer.clientY, 0, window.innerHeight, 1, 0); // Invert y-axis for pitch mapping
+  
+    if (x && y) {
+      x.normalizedValue = xValue;
+      y.normalizedValue = yValue;
+    }
+}
+
 function setup() {
   // set canvas to window size
   createCanvas(windowWidth, windowHeight);
@@ -11,7 +34,7 @@ function setup() {
 
   loadRNBO();
 
-  document.addEventListener("pointermove", updateRNBO);
+  window.addEventListener("pointermove", handlePointerMove);
   window.addEventListener("pointerdown", handlePointerDown); // Listen for pointer down event on the window
   
 
@@ -31,6 +54,7 @@ async function loadRNBO() {
   x = device.parametersById.get('x');
   y = device.parametersById.get('y');
 }
+
 
 
 function draw() {
