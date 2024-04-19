@@ -1,52 +1,121 @@
-// ICM-2016
-
-// Take a look at the HTML file where some things have been
-// added for mobile viewing
-
-var colors;
-
-let osc, env;
-
-let notes = [50, 52, 54, 55, 57, 59, 61, 62];
+let audioContext;
+let device;
+let y;
+let x;
+let lastTapTime = 0;
+const doubleTapThreshold = 300; // Time threshold for double-tap in milliseconds
 
 
 function setup() {
-  // Make the canvas the size of the mobile device screen
+  // set canvas to window size
   createCanvas(windowWidth, windowHeight);
-  background(200);
 
-  // An array of five colors, one for each finger
-  colors = [color(255,0,0), color(0,255,0), color(0,0,255), color(255, 255,0), color(0,255,255)];
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+    loadRNBO();
 
-  // set up simple oscillator 
-  env = new p5.Envelope(0.01, 0.1, 1, 0.5);
-  
-  osc = new p5.Oscillator('triangle');
-  osc.start();
-  osc.amp(env);
+    document.addEventListener("pointermove", updateRNBO);
+    window.addEventListener("pointerdown", handlePointerDown); // Listen for pointer down event on the window
 
 }
 
-function draw() {
-  // The touches array holds an object for each and every touch
-  // The array length is dynamic and tied to the number of fingers 
-  // currently touching
-  for (var i = 0; i < touches.length; i++) {
-    noStroke();
-    // One color per finger
-    fill(colors[i]);
-    // Draw a circle at each finger
-    ellipse(touches[i].x, touches[i].y, 24, 24);
+async function loadRNBO() {
+  const { createDevice } = RNBO;
+
+  await audioContext.resume();
+
+  const rawPatcher = await fetch('patch.export.json');
+  const patcher = await rawPatcher.json();
+
+  device = await createDevice({ context: audioContext, patcher });
+  device.node.connect(audioContext.destination);
+
+  x = device.parametersById.get('x');
+  y = device.parametersById.get('y');
+}
+
+function startAudioContext() {
+  if (audioContext.state === 'suspended') {
+      audioContext.resume();
   }
 }
 
-function touchStarted() {
-  env.play();
+function updateRNBO(e) {
+  let yValue = map(e.clientY, height, 0, 0, 1); // Normalize mouseY
+  let xValue = map(e.clientX, 0, width, 0, 1); // Normalize mouseX
+
+  if (y) {
+      y.normalizedValue = yValue;
+  }
+
+  if (x) {
+      x.normalizedValue = xValue;
+  }
+}
+
+function handlePointerDown(event) {
+  const currentTime = new Date().getTime();
+  const isDoubleTap = currentTime - lastTapTime < doubleTapThreshold;
+
+  if (isDoubleTap) {
+      toggleAudioContext();
+  }
+
+  lastTapTime = currentTime;
+}
+
+function toggleAudioContext() {
+  if (audioContext.state === 'running') {
+      audioContext.suspend();
+  } else if (audioContext.state === 'suspended') {
+      audioContext.resume();
+  }
 }
 
 
-// this prevents dragging screen around
-function touchMoved() {
+function draw() {
+  background(180, 17, 240);
+  
+
+  function draw() {
+
+    background(255, 100, 40);
+  
+    // for each touch, draw an ellipse at its location with a unique color.
+    for (var i = 0; i < Math.min(touches.length, 4); i++) {
+      // Create a unique color based on the touch index
+      var uniqueColor = color((i * 10) % 255, (i * 4) % 255, (i * 100) % 255);
+      fill(uniqueColor);
+      ellipse(touches[i].x, touches[i].y, 50, 50);
+  }
+  }
+}
+
+// This prevents default touch interaction
+function mousePressed() {
   return false;
+}
+
+document.addEventListener('gesturestart', function(e) {
+  e.preventDefault();
+});
+
+var coordX = 0;
+var coordY = 0;
+
+// Use pointermove event to handle both mouse and touch events
+window.onmousemove = coordHandler;
+window.onpointerdown = coordHandler;
+window.onpointermove = coordHandler;
+
+function coordHandler(event) {
+  // Update coordinates based on event type
+  switch (event.type) {
+    case 'mousemove':
+    case 'pointerdown':
+    case 'pointermove':
+      coordX = event.clientX;
+      coordY = event.clientY;
+      break;
+  }
 }
